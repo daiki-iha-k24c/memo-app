@@ -680,7 +680,6 @@ document.addEventListener("click", (event) => {
 
   if (event.target.closest("#new-note-button, #primary-add-button, #mobile-add-button, #empty-add-button")) openEditor();
   if (event.target.closest("#add-folder-button, #section-add-folder, #empty-folder-action")) openFolderDialog();
-  if (event.target.closest("#mobile-menu-button")) $(".sidebar").classList.toggle("is-open");
   if (event.target.closest("#settings-button, #mobile-settings-button")) openSettings();
   if (event.target.closest("#close-settings-button, #settings-backdrop")) closeSettings();
   if (event.target.closest("#close-editor-button, #done-editor-button, #editor-backdrop")) closeEditor();
