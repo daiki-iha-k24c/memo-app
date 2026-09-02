@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eef7f2" />
+    <title>memo — your quiet space</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="メインメニュー">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">✦</div>
+          <div>
+            <div class="brand-name">memo</div>
+            <div class="brand-caption">your quiet space</div>
+          </div>
+        </div>
+
+        <div class="sidebar-block">
+          <div class="sidebar-label">WORKSPACE</div>
+          <nav class="primary-nav">
+            <button class="nav-item is-active" data-view="home" type="button">
+              <span class="nav-icon icon-grid" aria-hidden="true"></span>
+              <span>すべてのメモ</span>
+              <span class="nav-count" id="all-note-count">0</span>
+            </button>
+            <button class="nav-item" data-view="favorites" type="button">
+              <span class="nav-icon icon-star" aria-hidden="true">☆</span>
+              <span>お気に入り</span>
+              <span class="nav-count" id="favorite-count">0</span>
+            </button>
+          </nav>
+        </div>
+
+        <div class="sidebar-block folder-sidebar-block">
+          <div class="sidebar-heading">
+            <div class="sidebar-label">FOLDERS</div>
+            <button class="mini-action" id="add-folder-button" type="button" aria-label="フォルダを追加">＋</button>
+          </div>
+          <nav class="folder-nav" id="sidebar-folders"></nav>
+        </div>
+
+        <div class="sidebar-bottom">
+          <button class="new-note-button" id="new-note-button" type="button">
+            <span class="new-note-plus" aria-hidden="true">＋</span>
+            <span>新しいメモ</span>
+            <span class="shortcut">N</span>
+          </button>
+          <button class="settings-button" id="settings-button" type="button">
+            <span class="nav-icon icon-settings" aria-hidden="true"></span>
+            <span>設定</span>
+          </button>
+          <div class="sync-indicator" id="sync-indicator">
+            <span class="sync-dot"></span>
+            <span><strong id="sync-indicator-title">保存済み</strong><small id="sync-indicator-detail">このブラウザに保存</small></span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button class="mobile-menu-button" id="mobile-menu-button" type="button" aria-label="メニューを開く">☰</button>
+          <div class="breadcrumb" id="breadcrumb"><span class="breadcrumb-home">memo</span><span class="breadcrumb-separator">/</span><span>すべてのメモ</span></div>
+          <div class="topbar-actions">
+            <label class="search-box">
+              <span class="search-icon" aria-hidden="true"></span>
+              <input id="search-input" type="search" placeholder="メモを検索" aria-label="メモを検索" />
+              <span class="search-shortcut">⌘ K</span>
+            </label>
+            <button class="avatar-button" type="button" aria-label="プロフィール">YN</button>
+          </div>
+        </header>
+
+        <div class="page-content">
+          <section class="welcome-row">
+            <div>
+              <div class="eyebrow">THURSDAY, SEP 02, 2026</div>
+              <h1 id="page-title">すべてのメモ</h1>
+              <p id="page-description">頭の中にあるものを、静かに整理しましょう。</p>
+            </div>
+            <button class="primary-add-button" id="primary-add-button" type="button"><span>＋</span> メモを追加</button>
+          </section>
+
+          <div class="view-toolbar">
+            <div class="view-tabs" role="tablist" aria-label="メモの表示">
+              <button class="view-tab is-active" data-filter="folders" type="button">フォルダ</button>
+              <button class="view-tab" data-filter="all" type="button">すべてのメモ <span id="toolbar-note-count">0</span></button>
+            </div>
+            <div class="toolbar-note">自動保存オン <span class="tiny-check">✓</span></div>
+          </div>
+
+          <section class="content-section folder-section" id="folder-section">
+            <div class="section-heading">
+              <div>
+                <h2>フォルダ</h2>
+                <span class="section-subtitle">テーマごとにまとめておく</span>
+              </div>
+              <button class="text-action" id="section-add-folder" type="button">＋ フォルダを追加</button>
+            </div>
+            <div class="folder-grid" id="folder-grid"></div>
+          </section>
+
+          <section class="content-section notes-section">
+            <div class="section-heading">
+              <div class="notes-heading-label">
+                <h2 id="notes-heading">最近のメモ</h2>
+                <span class="section-number" id="notes-section-count">0</span>
+              </div>
+              <div class="display-controls">
+                <label class="sort-control">並び替え<select id="sort-select" aria-label="メモの並び替え"><option value="recent">最近使った順</option><option value="oldest">古い順</option></select></label>
+                <button class="icon-button is-selected" type="button" aria-label="カード表示"><span class="card-view-icon"></span></button>
+                <button class="icon-button" type="button" aria-label="リスト表示"><span class="list-view-icon"></span></button>
+              </div>
+            </div>
+            <div class="notes-grid" id="notes-grid"></div>
+            <div class="empty-state" id="empty-state" hidden>
+              <div class="empty-illustration">✎</div>
+              <h3>まだメモがありません</h3>
+              <p>思いついたことを、最初のメモに残してみましょう。</p>
+              <button class="primary-add-button" type="button" id="empty-add-button"><span>＋</span> メモを追加</button>
+            </div>
+          </section>
+        </div>
+
+        <footer class="mobile-footer">
+          <button class="mobile-footer-item" data-view="home" type="button"><span class="nav-icon icon-grid"></span><small>ホーム</small></button>
+          <button class="mobile-footer-add" id="mobile-add-button" type="button" aria-label="新しいメモ">＋</button>
+          <button class="mobile-footer-item" id="mobile-settings-button" type="button"><span class="nav-icon icon-settings"></span><small>設定</small></button>
+        </footer>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="editor-backdrop" hidden></div>
+    <section class="editor-panel" id="editor-panel" aria-label="メモを編集" aria-hidden="true">
+      <div class="editor-header">
+        <button class="close-button" id="close-editor-button" type="button" aria-label="閉じる">×</button>
+        <div class="editor-status"><span class="editor-status-dot"></span><span id="editor-save-status">自動保存</span></div>
+        <div class="editor-header-actions">
+          <button class="editor-icon-action" id="favorite-editor-button" type="button" aria-label="お気に入りに追加">☆</button>
+        </div>
+      </div>
+      <div class="editor-scroll">
+        <div class="editor-meta-line">
+          <span class="editor-note-label">NOTE</span>
+          <span class="editor-updated" id="editor-updated">新規メモ</span>
+          <button class="delete-note-button" id="delete-note-button" type="button">削除</button>
+        </div>
+        <input class="editor-title" id="editor-title" type="text" placeholder="タイトルを入力" aria-label="メモのタイトル" />
+        <div class="editor-folder-row">
+          <span class="folder-pin-icon" aria-hidden="true">⌑</span>
+          <label for="editor-folder">フォルダ</label>
+          <select id="editor-folder" aria-label="保存先フォルダ"></select>
+          <button class="inline-folder-button" id="editor-add-folder" type="button">＋ フォルダを作成</button>
+        </div>
+        <div class="editor-toolbar" id="editor-toolbar" role="toolbar" aria-label="書式設定">
+          <button data-command="formatBlock" data-value="p" type="button" aria-label="本文">本文</button>
+          <button data-command="formatBlock" data-value="h2" type="button" aria-label="見出し">H1</button>
+          <span class="toolbar-divider"></span>
+          <button data-command="bold" type="button" class="format-button" aria-label="太字"><strong>B</strong></button>
+          <button data-command="italic" type="button" class="format-button" aria-label="斜体"><em>I</em></button>
+          <button data-command="underline" type="button" class="format-button" aria-label="下線"><u>U</u></button>
+          <button data-command="insertUnorderedList" type="button" class="format-button list-format" aria-label="箇条書き">•</button>
+          <span class="toolbar-divider"></span>
+          <button data-command="foreColor" data-value="var(--accent-strong)" type="button" class="color-format" aria-label="文字色"><span>A</span></button>
+          <button data-command="hiliteColor" data-value="#fff0b2" type="button" class="highlight-format" aria-label="マーカー"><span></span></button>
+          <button id="insert-link-button" type="button" class="format-button" aria-label="リンク">↗</button>
+        </div>
+        <div class="editor-content" id="editor-content" contenteditable="true" data-placeholder="ここにメモを書き始める…"></div>
+        <div class="editor-attachments" id="editor-attachments"></div>
+        <label class="attachment-dropzone" for="file-input">
+          <span class="attachment-plus">＋</span>
+          <span><strong>ファイルを追加</strong><small>画像、PDF、その他のファイル</small></span>
+          <input id="file-input" type="file" multiple />
+        </label>
+      </div>
+      <div class="editor-bottom-bar"><button class="editor-done-button" id="done-editor-button" type="button">完了</button></div>
+    </section>
+
+    <div class="modal-backdrop" id="settings-backdrop" hidden></div>
+    <section class="settings-panel" id="settings-panel" aria-label="設定" aria-hidden="true">
+      <div class="settings-header">
+        <div><div class="eyebrow">PREFERENCES</div><h2>設定</h2></div>
+        <button class="close-button" id="close-settings-button" type="button" aria-label="閉じる">×</button>
+      </div>
+      <div class="settings-content">
+        <section class="settings-section">
+          <div class="settings-section-title"><div><h3>アクセントカラー</h3><p>あなたの気分に合わせて色を選べます。</p></div><span class="settings-preview-dot"></span></div>
+          <div class="theme-grid" id="theme-grid">
+            <button class="theme-option is-selected" data-theme="sage" type="button"><span class="theme-swatch sage"></span><span>セージ</span><i>✓</i></button>
+            <button class="theme-option" data-theme="coral" type="button"><span class="theme-swatch coral"></span><span>コーラル</span><i>✓</i></button>
+            <button class="theme-option" data-theme="orange" type="button"><span class="theme-swatch orange"></span><span>アプリコット</span><i>✓</i></button>
+            <button class="theme-option" data-theme="yellow" type="button"><span class="theme-swatch yellow"></span><span>バター</span><i>✓</i></button>
+            <button class="theme-option" data-theme="blue" type="button"><span class="theme-swatch blue"></span><span>スカイ</span><i>✓</i></button>
+            <button class="theme-option" data-theme="purple" type="button"><span class="theme-swatch purple"></span><span>ラベンダー</span><i>✓</i></button>
+          </div>
+        </section>
+        <section class="settings-section cloud-sync-section" id="cloud-sync-section">
+          <div class="settings-section-title"><div><h3>クラウド同期</h3><p id="cloud-sync-description">同じアカウントでPCとスマホを同期します。</p></div><span class="cloud-sync-icon">↗</span></div>
+          <div class="auth-state signed-out" id="signed-out-state">
+            <label for="auth-email">メールアドレス</label>
+            <input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" />
+            <label for="auth-password">パスワード</label>
+            <input id="auth-password" type="password" autocomplete="current-password" placeholder="6文字以上" />
+            <div class="auth-actions"><button class="auth-secondary-button" id="auth-signup-button" type="button">新規登録</button><button class="auth-primary-button" id="auth-login-button" type="button">ログイン</button></div>
+            <small id="auth-config-hint">Supabaseの設定後に利用できます。</small>
+          </div>
+          <div class="auth-state signed-in" id="signed-in-state" hidden>
+            <div class="signed-in-user"><span class="signed-in-avatar">YN</span><span><strong id="auth-user-email">ログイン中</strong><small>このアカウントに同期しています</small></span></div>
+            <button class="auth-secondary-button" id="auth-logout-button" type="button">ログアウト</button>
+          </div>
+        </section>
+        <section class="settings-section settings-list-section">
+          <div class="setting-row"><span><strong>自動保存</strong><small>入力内容をすぐに保存します</small></span><span class="toggle is-on"><i></i></span></div>
+          <div class="setting-row"><span><strong>同期ステータス</strong><small id="sync-setting-description">このブラウザではいつでも復元できます</small></span><span class="sync-badge"><i></i><span id="sync-badge-text">保存済み</span></span></div>
+        </section>
+        <section class="settings-section about-section"><span class="about-mark">✦</span><div><strong>memo</strong><p>あなたの考えを、軽やかに。</p></div><span class="version">v1.0</span></section>
+      </div>
+    </section>
+
+    <div class="modal-backdrop" id="folder-backdrop" hidden></div>
+    <section class="folder-dialog" id="folder-dialog" aria-label="フォルダを作成" aria-hidden="true">
+      <div class="folder-dialog-header">
+        <div><div class="eyebrow">NEW FOLDER</div><h2>フォルダを作成</h2></div>
+        <button class="close-button" id="close-folder-dialog" type="button" aria-label="閉じる">×</button>
+      </div>
+      <div class="folder-dialog-content">
+        <label class="folder-name-field" for="folder-name-input"><span>フォルダ名</span><input id="folder-name-input" type="text" placeholder="例：仕事、アイデア" maxlength="30" /></label>
+        <div class="folder-color-field"><span>カラー</span><div class="folder-color-options" id="folder-color-options"></div></div>
+      </div>
+      <div class="folder-dialog-actions"><button class="secondary-dialog-button" id="cancel-folder-dialog" type="button">キャンセル</button><button class="primary-dialog-button" id="confirm-folder-dialog" type="button">作成する</button></div>
+    </section>
+
+    <div class="note-context-menu" id="note-context-menu" hidden><button id="context-delete-note" type="button"><span>⌫</span>削除</button></div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
