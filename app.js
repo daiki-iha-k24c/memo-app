@@ -49,6 +49,7 @@ let contextMenuNoteId = null;
 let toastTimer;
 let supabaseClient = null;
 let currentUser = null;
+let currentUsername = "";
 let realtimeChannel = null;
 let cloudSyncTimer = null;
 let remoteHydrateTimer = null;
@@ -410,6 +411,39 @@ function hasSupabaseConfig() {
   return typeof window.supabase?.createClient === "function" && /^https:\/\//.test(supabaseConfig.url || "") && Boolean(supabaseConfig.publishableKey);
 }
 
+function normalizeUsername(value) {
+  return String(value || "").trim().toLocaleLowerCase("ja-JP");
+}
+
+function isValidUsername(username) {
+  return /^[\p{L}\p{N}][\p{L}\p{N}._-]{2,29}$/u.test(username);
+}
+
+function readUsername() {
+  const username = normalizeUsername($("#auth-username")?.value);
+  if (!isValidUsername(username)) {
+    showToast("ユーザー名は3〜30文字で、先頭は英数字または日本語にしてください。", 5000);
+    return "";
+  }
+  return username;
+}
+
+function usernameKey(username) {
+  const seeds = [2166136261, 33554467, 2654435761, 1597334677, 3812015801];
+  return seeds.map((seed) => {
+    let hash = seed;
+    for (const character of username) {
+      hash ^= character.codePointAt(0);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, "0");
+  }).join("");
+}
+
+function usernameToInternalEmail(username) {
+  return `u-${usernameKey(username)}@example.com`;
+}
+
 function folderVisuals(color) {
   return folderPalette.find((palette) => palette.color.toLowerCase() === (color || "").toLowerCase()) || { color: color || "#b6ddca", soft: "#edf6f0", ink: color || "#487f67" };
 }
@@ -418,14 +452,16 @@ function updateAuthUi() {
   const signedOut = $("#signed-out-state");
   const signedIn = $("#signed-in-state");
   const hint = $("#auth-config-hint");
-  const inputs = [$("#auth-email"), $("#auth-password"), $("#auth-login-button"), $("#auth-signup-button")];
+  const inputs = [$("#auth-username"), $("#auth-password"), $("#auth-login-button"), $("#auth-signup-button")];
   if (!signedOut || !signedIn) return;
   const configured = Boolean(supabaseClient);
   signedOut.hidden = Boolean(currentUser);
   signedIn.hidden = !currentUser;
   inputs.forEach((input) => { if (input) input.disabled = !configured || Boolean(currentUser); });
-  if ($("#auth-user-email")) $("#auth-user-email").textContent = currentUser?.email || "ログイン中";
-  if (hint) hint.textContent = configured ? "同じアカウントでログインした端末にメモが同期されます。" : "supabase-config.js にSupabaseの接続情報を設定してください。";
+  if ($("#auth-user-name")) $("#auth-user-name").textContent = currentUsername || currentUser?.user_metadata?.username || "ログイン中";
+  if (hint) hint.textContent = configured
+    ? "ユーザー名とパスワードで登録・ログインできます。"
+    : "supabase-config.js にSupabaseの接続情報を設定してください。";
   if ($("#cloud-sync-description")) $("#cloud-sync-description").textContent = configured ? "同じアカウントでPCとスマホを同期します。" : "接続設定後、同じアカウントでPCとスマホを同期できます。";
 }
 
@@ -517,6 +553,7 @@ async function hydrateFromCloud() {
     console.warn("Cloud hydrate failed", error);
     isHydratingFromCloud = false;
     updateSyncStatus("同期エラー", "ローカルには保存済み");
+    showToast(formatCloudError(error), 6000);
   }
 }
 
@@ -537,29 +574,84 @@ function queueRemoteHydrate() {
   remoteHydrateTimer = window.setTimeout(() => { hydrateFromCloud(); }, 400);
 }
 
+function formatAuthError(error) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  if (code === "email_not_confirmed" || message.includes("email not confirmed")) {
+    return "Supabaseの「Confirm email」をオフにしてから、もう一度登録してください。";
+  }
+  if (code === "invalid_credentials" || message.includes("invalid login credentials")) {
+    return "ユーザー名またはパスワードが違います。";
+  }
+  if (code === "user_already_exists" || message.includes("already registered") || message.includes("already exists")) {
+    return "このユーザー名は登録済みです。ログインをお試しください。";
+  }
+  if (message.includes("password should be at least") || message.includes("password must be at least")) {
+    return "パスワードは6文字以上で入力してください。";
+  }
+  if (message.includes("rate limit") || message.includes("too many requests")) {
+    return "試行回数が多すぎます。少し時間をおいてからお試しください。";
+  }
+  if (message.includes("failed to fetch") || message.includes("network")) {
+    return "Supabaseに接続できません。通信状態を確認してください。";
+  }
+  return `認証に失敗しました。${error?.message || "時間をおいて再度お試しください。"}`;
+}
+
+function formatCloudError(error) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  if (code === "42p01" || (message.includes("relation") && message.includes("does not exist"))) {
+    return "ログインは成功しましたが、Supabaseのテーブルが未作成です。supabase-schema.sqlをSQL Editorで実行してください。";
+  }
+  if (error?.status === 401 || error?.status === 403) {
+    return "ログインは成功しましたが、SupabaseのRLS設定を確認してください。";
+  }
+  return "クラウド同期に失敗しました。ローカルには保存されています。";
+}
+
 async function loginWithPassword() {
   if (!supabaseClient) { showToast("Supabaseの接続設定が必要です"); return; }
-  const email = $("#auth-email").value.trim();
+  const username = readUsername();
   const password = $("#auth-password").value;
-  if (!email || password.length < 6) { showToast("メールアドレスと6文字以上のパスワードを入力してください"); return; }
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) { showToast(error.message); return; }
-  showToast("ログインしました");
+  if (!username || password.length < 6) { showToast("ユーザー名と6文字以上のパスワードを入力してください"); return; }
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email: usernameToInternalEmail(username), password });
+    if (error) { showToast(formatAuthError(error), 5000); return; }
+    showToast("ログインしました");
+  } catch (error) {
+    showToast(formatAuthError(error), 5000);
+  }
 }
 
 async function signUp() {
   if (!supabaseClient) { showToast("Supabaseの接続設定が必要です"); return; }
-  const email = $("#auth-email").value.trim();
+  const username = readUsername();
   const password = $("#auth-password").value;
-  if (!email || password.length < 6) { showToast("メールアドレスと6文字以上のパスワードを入力してください"); return; }
-  const { data, error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) { showToast(error.message); return; }
-  showToast(data.session ? "アカウントを作成しました" : "確認メールを送信しました");
+  if (!username || password.length < 6) { showToast("ユーザー名と6文字以上のパスワードを入力してください"); return; }
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: usernameToInternalEmail(username),
+      password,
+      options: { data: { username } }
+    });
+    if (error) { showToast(formatAuthError(error), 5000); return; }
+    if (data.session) {
+      currentUsername = username;
+      showToast("アカウントを作成しました");
+    } else {
+      $("#auth-password").value = "";
+      showToast("登録できませんでした。Supabaseの「Confirm email」をオフにしてください。", 6000);
+    }
+  } catch (error) {
+    showToast(formatAuthError(error), 5000);
+  }
 }
 
 async function logout() {
   if (!supabaseClient) return;
   await supabaseClient.auth.signOut();
+  currentUsername = "";
   if (realtimeChannel) { await supabaseClient.removeChannel(realtimeChannel); realtimeChannel = null; }
   updateSyncStatus("保存済み", "このブラウザに保存");
   showToast("ログアウトしました");
@@ -610,9 +702,11 @@ async function initializeCloudSync() {
     updateAuthUi();
     supabaseClient.auth.onAuthStateChange((event, session) => {
       currentUser = session?.user || null;
+      currentUsername = currentUser?.user_metadata?.username || "";
       updateAuthUi();
       if (currentUser && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) window.setTimeout(() => hydrateFromCloud(), 0);
       if (!currentUser) {
+        currentUsername = "";
         if (realtimeChannel) { void supabaseClient.removeChannel(realtimeChannel); realtimeChannel = null; }
         updateSyncStatus("保存済み", "このブラウザに保存");
       }
@@ -620,6 +714,7 @@ async function initializeCloudSync() {
     const sessionResult = await supabaseClient.auth.getSession();
     if (sessionResult.error) throw sessionResult.error;
     currentUser = sessionResult.data.session?.user || null;
+    currentUsername = currentUser?.user_metadata?.username || "";
     updateAuthUi();
     if (currentUser) await hydrateFromCloud();
     else updateSyncStatus("ログイン待ち", "アカウントを設定してください");
@@ -631,12 +726,12 @@ async function initializeCloudSync() {
   }
 }
 
-function showToast(message) {
+function showToast(message, duration = 2200) {
   const toast = $("#toast");
   toast.textContent = message;
   toast.classList.add("is-visible");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 2200);
+  toastTimer = setTimeout(() => toast.classList.remove("is-visible"), duration);
 }
 
 function updateToolbarVisibility() {

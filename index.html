@@ -204,15 +204,15 @@
         <section class="settings-section cloud-sync-section" id="cloud-sync-section">
           <div class="settings-section-title"><div><h3>クラウド同期</h3><p id="cloud-sync-description">同じアカウントでPCとスマホを同期します。</p></div><span class="cloud-sync-icon">↗</span></div>
           <div class="auth-state signed-out" id="signed-out-state">
-            <label for="auth-email">メールアドレス</label>
-            <input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" />
+            <label for="auth-username">ユーザー名</label>
+            <input id="auth-username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="3〜30文字" />
             <label for="auth-password">パスワード</label>
             <input id="auth-password" type="password" autocomplete="current-password" placeholder="6文字以上" />
             <div class="auth-actions"><button class="auth-secondary-button" id="auth-signup-button" type="button">新規登録</button><button class="auth-primary-button" id="auth-login-button" type="button">ログイン</button></div>
-            <small id="auth-config-hint">Supabaseの設定後に利用できます。</small>
+            <small id="auth-config-hint">ユーザー名とパスワードで登録・ログインできます。</small>
           </div>
           <div class="auth-state signed-in" id="signed-in-state" hidden>
-            <div class="signed-in-user"><span class="signed-in-avatar">YN</span><span><strong id="auth-user-email">ログイン中</strong><small>このアカウントに同期しています</small></span></div>
+            <div class="signed-in-user"><span class="signed-in-avatar">YN</span><span><strong id="auth-user-name">ログイン中</strong><small>このアカウントに同期しています</small></span></div>
             <button class="auth-secondary-button" id="auth-logout-button" type="button">ログアウト</button>
           </div>
         </section>

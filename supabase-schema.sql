@@ -14,6 +14,47 @@ begin
 end;
 $$;
 
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  username text not null check (
+    length(btrim(username)) between 3 and 30
+    and username !~ '[[:space:]]'
+  ),
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists profiles_username_unique
+on public.profiles (lower(username));
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  requested_username text;
+begin
+  requested_username := lower(nullif(btrim(new.raw_user_meta_data ->> 'username'), ''));
+  if requested_username is null
+     or length(requested_username) < 3
+     or length(requested_username) > 30
+     or requested_username ~ '[[:space:]]' then
+    requested_username := 'user_' || substr(replace(new.id::text, '-', ''), 1, 12);
+  end if;
+
+  insert into public.profiles (id, username)
+  values (new.id, requested_username)
+  on conflict (id) do update set username = excluded.username;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
 create table if not exists public.folders (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -72,14 +113,23 @@ for each row execute function public.set_updated_at();
 alter table public.folders enable row level security;
 alter table public.notes enable row level security;
 alter table public.note_attachments enable row level security;
+alter table public.profiles enable row level security;
 
 revoke all on public.folders from anon;
 revoke all on public.notes from anon;
 revoke all on public.note_attachments from anon;
+revoke all on public.profiles from anon;
 
 grant select, insert, update, delete
 on public.folders, public.notes, public.note_attachments
 to authenticated;
+
+grant select on public.profiles to authenticated;
+
+drop policy if exists "Users can select own profile" on public.profiles;
+create policy "Users can select own profile"
+on public.profiles for select to authenticated
+using ((select auth.uid()) = id);
 
 drop policy if exists "Users can select own folders" on public.folders;
 create policy "Users can select own folders"
