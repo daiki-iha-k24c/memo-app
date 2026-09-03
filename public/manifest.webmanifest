@@ -1,0 +1,21 @@
+{
+  "name": "memo — your quiet space",
+  "short_name": "memo",
+  "lang": "ja",
+  "start_url": "./",
+  "display": "standalone",
+  "scope": "./",
+  "id": "./",
+  "orientation": "portrait-primary",
+  "background_color": "#fbfcfb",
+  "theme_color": "#e9f5ee",
+  "description": "考えを静かに整理するためのメモ帳アプリ",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

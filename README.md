@@ -1,47 +1,62 @@
 # memo
 
-白基調のレスポンシブなメモ帳UIです。依存なしで動くため、`index.html` を開くだけでも確認できます。
+Next.js（App Router）＋TypeScriptで作った、白基調のPWAメモ帳です。PCとスマホで同じUIを使えます。
 
 ## できること
 
-- 「フォルダ」タブでのフォルダ一覧・未分類メモ表示
-- 「すべてのメモ」タブでの全メモ表示と、最近使った順／古い順の並び替え
-- 2:3のカード表示、検索、お気に入り
-- タイトル・見出し・太字・斜体・下線・箇条書き・文字色・マーカー
+- 「フォルダ」タブでフォルダ一覧と未分類メモを表示
+- 「すべてのメモ」タブで最近使った順／古い順に並び替え
+- 2:3の横向きカード表示、検索、お気に入り
+- 見出し・太字・斜体・下線・箇条書き・文字色・マーカー・リンク
 - 画像やファイルの添付
-- セージ／コーラル／アプリコット／バター／スカイ／ラベンダーのテーマ変更
-- `localStorage` を使った自動保存
-- スマホ向けのフッターナビとPWAマニフェスト
-- Service Workerによるオフライン起動
-- Supabase Authでのログイン、Database／Storage／Realtime同期
+- アクセントカラーの変更
+- ユーザー名＋パスワードのログイン
+- Supabase Database／Storage／Realtime同期
+- localStorageによる未ログイン時の自動保存
+- PWA・Service Worker対応
 
-## 起動
-
-Node.js がある場合は、このフォルダで次を実行します。
+## ローカル起動
 
 ```bash
-node -e "const http=require('http'),fs=require('fs'),path=require('path'); http.createServer((req,res)=>{const f=path.join(process.cwd(),req.url==='/'?'index.html':req.url);fs.readFile(f,(e,d)=>{if(e){res.writeHead(404);res.end();}else{res.writeHead(200);res.end(d);}})}).listen(4173)"
+npm install
+npm run dev
 ```
 
-その後 `http://localhost:4173` を開きます。
+`http://localhost:3000` を開いてください。
 
-## Supabase接続
+本番用の静的出力は次で作成できます。
 
-先にSupabase SQL EditorでテーブルとRLSのSQLを実行し、`supabase-config.js` の `url` と `publishableKey` を入力してください。ブラウザに置いてよいのはPublishable key（旧anon key）だけです。`service_role` keyは入力しないでください。
+```bash
+npm run build
+```
 
-Supabase Dashboardの `Authentication > Providers > Email` で、次のように設定してください。
+生成された`out`フォルダを静的ホスティングへ公開できます。
 
-- Email provider: ON
-- Confirm email: OFF
+## Supabase設定
 
-画面ではメールアドレスを使いませんが、Supabase内部ではユーザー名から生成した非公開の識別子をメール形式として利用します。アプリの「設定」からユーザー名とパスワードで新規登録・ログインしてください。ログインするとメモとフォルダがクラウドへ保存されます。既存のローカルデータは、クラウド側が空の最初のログイン時に移行されます。
+`supabase-config.js`にSupabaseのURLとPublishable key（旧anon key）を入力します。`service_role` keyはブラウザへ置かないでください。Next.jsのビルド時にこの設定を読み取り、クライアントへ公開用環境変数として渡します。
 
-以前のメールアドレス方式で作成したアカウントは、ユーザー名方式へ自動変換されません。必要であれば新しいユーザー名でアカウントを作成してください。
+Supabase Dashboardでは次を設定してください。
 
-## スマホにPWAとして追加
+- `Authentication > Providers > Email`：Email providerはON
+- `Confirm email`：OFF
 
-PWAのインストールにはHTTPSでの公開が必要です（`localhost` は開発用の例外です）。Netlify、Vercel、Cloudflare Pages、GitHub Pagesなどに、このフォルダ内のファイルをそのまま公開してください。公開URLをスマホのChrome／Safariで開き、「ホーム画面に追加」または「インストール」を選ぶとアプリとして使えます。
+画面にはメールアドレスを表示しませんが、Supabase内部ではユーザー名から生成した内部識別子をメール形式として利用します。
 
-## 同期について
+その後、[supabase-schema.sql](./supabase-schema.sql)をSQL Editorで実行してください。ユーザー名を保存する`profiles`テーブルと登録時のトリガーもこのSQLに含まれます。
 
-ログイン中はSupabase Database／Storage／Realtimeを使って、PCとスマホのメモ・フォルダ・添付ファイルを同期します。未ログイン時はブラウザ内に保存されます。
+以前のメールアドレス方式で作成したアカウントは、ユーザー名方式へ自動変換されません。新しいユーザー名で登録してください。
+
+## GitHub Pages公開
+
+このリポジトリには`.github/workflows/deploy-pages.yml`を含めています。GitHubリポジトリの`Settings > Pages > Build and deployment > Source`を`GitHub Actions`に変更し、`main`へプッシュすると自動でビルド・公開されます。
+
+リポジトリ名が`memo-app`の場合、公開URLは通常次の形式です。
+
+`https://daiki-iha-k24c.github.io/memo-app/`
+
+GitHub Actionsではリポジトリ用の`/memo-app`パスを自動設定します。ローカル開発時はルートパスで動作します。
+
+## PWAとして利用
+
+公開URLをスマホで開き、「ホーム画面に追加」または「インストール」を選択してください。Service Workerが更新を検知すると、次回表示時に新しいアプリへ切り替わります。
