@@ -237,6 +237,15 @@
       <div class="folder-dialog-actions"><button class="secondary-dialog-button" id="cancel-folder-dialog" type="button">キャンセル</button><button class="primary-dialog-button" id="confirm-folder-dialog" type="button">作成する</button></div>
     </section>
 
+    <div class="modal-backdrop delete-dialog-backdrop" id="delete-backdrop" hidden></div>
+    <section class="delete-dialog" id="delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-message" aria-hidden="true">
+      <div class="delete-dialog-content">
+        <div class="delete-dialog-icon" aria-hidden="true">!</div>
+        <div><div class="eyebrow">DELETE NOTE</div><h2 id="delete-dialog-title">メモを削除しますか？</h2><p id="delete-dialog-message">この操作は取り消せません。</p></div>
+      </div>
+      <div class="delete-dialog-actions"><button class="secondary-dialog-button" id="cancel-delete-dialog" type="button">キャンセル</button><button class="danger-dialog-button" id="confirm-delete-dialog" type="button">削除する</button></div>
+    </section>
+
     <div class="note-context-menu" id="note-context-menu" hidden><button id="context-delete-note" type="button"><span>⌫</span>削除</button></div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

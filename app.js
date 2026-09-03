@@ -46,6 +46,8 @@ let currentSort = "recent";
 let activeNoteId = null;
 let folderDialogContext = { selectInEditor: false };
 let contextMenuNoteId = null;
+let deleteDialogNoteId = null;
+let deleteDialogPreviousFocus = null;
 let toastTimer;
 let supabaseClient = null;
 let currentUser = null;
@@ -327,16 +329,45 @@ function closeNoteContextMenu() {
   $("#note-context-menu").hidden = true;
 }
 
-function deleteNoteById(noteId) {
+function openDeleteDialog(noteId) {
   const note = state.notes.find((item) => item.id === noteId);
-  if (!note || !window.confirm(`「${note.title || "無題のメモ"}」を削除しますか？`)) return;
+  if (!note) return;
+  deleteDialogNoteId = noteId;
+  deleteDialogPreviousFocus = document.activeElement?.closest("#note-context-menu") ? null : document.activeElement;
+  $("#delete-dialog-message").textContent = `「${note.title || "無題のメモ"}」を削除すると、元に戻せません。`;
+  closeNoteContextMenu();
+  $("#delete-backdrop").hidden = false;
+  requestAnimationFrame(() => {
+    $("#delete-dialog").classList.add("is-open");
+    $("#delete-dialog").setAttribute("aria-hidden", "false");
+    $("#cancel-delete-dialog").focus();
+  });
+}
+
+function closeDeleteDialog() {
+  $("#delete-dialog").classList.remove("is-open");
+  $("#delete-dialog").setAttribute("aria-hidden", "true");
+  deleteDialogNoteId = null;
+  setTimeout(() => { $("#delete-backdrop").hidden = true; }, 200);
+  if (deleteDialogPreviousFocus && typeof deleteDialogPreviousFocus.focus === "function") deleteDialogPreviousFocus.focus();
+  deleteDialogPreviousFocus = null;
+}
+
+function confirmDeleteNote() {
+  const noteId = deleteDialogNoteId;
+  const note = state.notes.find((item) => item.id === noteId);
+  if (!note) { closeDeleteDialog(); return; }
   state.notes = state.notes.filter((item) => item.id !== noteId);
   persist();
   if (supabaseClient && currentUser) void deleteRemoteNote(noteId);
-  closeNoteContextMenu();
+  closeDeleteDialog();
   if (activeNoteId === noteId) closeEditor();
   else render();
   showToast("メモを削除しました");
+}
+
+function deleteNoteById(noteId) {
+  openDeleteDialog(noteId);
 }
 
 function openEditor(noteId = null) {
@@ -752,6 +783,9 @@ function execFormat(command, value = null) {
 }
 
 document.addEventListener("click", (event) => {
+  if (event.target.closest("#cancel-delete-dialog, #delete-backdrop")) { closeDeleteDialog(); return; }
+  if (event.target.closest("#confirm-delete-dialog")) { confirmDeleteNote(); return; }
+
   const contextDeleteButton = event.target.closest("#context-delete-note");
   if (contextDeleteButton) { deleteNoteById(contextMenuNoteId); return; }
 
@@ -878,7 +912,13 @@ function closeSettings() {
 document.addEventListener("keydown", (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); $("#search-input").focus(); }
   if (event.key.toLowerCase() === "n" && document.activeElement.tagName !== "INPUT" && document.activeElement.getAttribute("contenteditable") !== "true") openEditor();
-  if (event.key === "Escape") { if (!$("#folder-dialog").classList.contains("is-open") && $("#editor-panel").classList.contains("is-open")) closeEditor(); else if (!$("#folder-dialog").classList.contains("is-open") && $("#settings-panel").classList.contains("is-open")) closeSettings(); else if ($("#folder-dialog").classList.contains("is-open")) closeFolderDialog(); else closeNoteContextMenu(); }
+  if (event.key === "Escape") {
+    if ($("#delete-dialog").classList.contains("is-open")) closeDeleteDialog();
+    else if (!$("#folder-dialog").classList.contains("is-open") && $("#editor-panel").classList.contains("is-open")) closeEditor();
+    else if (!$("#folder-dialog").classList.contains("is-open") && $("#settings-panel").classList.contains("is-open")) closeSettings();
+    else if ($("#folder-dialog").classList.contains("is-open")) closeFolderDialog();
+    else closeNoteContextMenu();
+  }
 });
 
 applyTheme(state.theme);

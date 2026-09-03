@@ -311,6 +311,16 @@ h1 { margin-top: 13px; font-size: clamp(32px, 4vw, 42px); line-height: 1.1; lett
 .secondary-dialog-button:hover { background: var(--surface-muted); }
 .primary-dialog-button { border: 0; background: var(--text); color: #fff; }
 .primary-dialog-button:hover { background: var(--accent-strong); }
+.delete-dialog-backdrop { z-index: 32; }
+.delete-dialog { position: fixed; z-index: 33; top: 50%; left: 50%; width: min(410px, calc(100% - 32px)); border: 1px solid #f1d9d6; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); transform: translate(-50%, -46%) scale(.98); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+.delete-dialog.is-open { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+.delete-dialog-content { display: flex; align-items: flex-start; gap: 14px; padding: 25px 24px 22px; }
+.delete-dialog-icon { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 12px; background: #fff0ef; color: #bd625b; font-size: 20px; font-weight: 800; }
+.delete-dialog-content h2 { margin-top: 6px; color: var(--text); font-size: 20px; letter-spacing: -.05em; }
+.delete-dialog-content p { margin-top: 9px; color: var(--text-soft); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.delete-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 24px 20px; border-top: 1px solid #f1e2e0; }
+.danger-dialog-button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 8px; background: #bd625b; color: #fff; font-size: 10px; font-weight: 700; }
+.danger-dialog-button:hover { background: #a8524b; }
 .note-context-menu { position: fixed; z-index: 28; min-width: 120px; padding: 4px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); box-shadow: 0 12px 30px rgba(32,51,43,.14); }
 .note-context-menu button { width: 100%; display: flex; align-items: center; gap: 7px; padding: 8px 9px; border: 0; border-radius: 6px; background: transparent; color: #b35f59; font-size: 10px; text-align: left; }
 .note-context-menu button:hover { background: #fff1f0; }
